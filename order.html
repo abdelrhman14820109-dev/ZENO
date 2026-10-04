@@ -35,6 +35,31 @@ window.sendOrder=async()=>{
  if(fields.some(id=>!document.getElementById(id).value.trim())){alert('من فضلك اكتب كل بيانات الاستلام المطلوبة');return}
  const btn=document.querySelector('.submit');btn.disabled=true;btn.textContent='جاري تسجيل الطلب...';
  const order={productId:p.id||'',productName:p.name||'ZENO PRODUCT',productPrice:Number(p.price||0),productImageUrl:p.imageUrl||p.img||'',size:selected,customerName:document.getElementById('name').value.trim(),phone:document.getElementById('phone').value.trim(),city:document.getElementById('city').value.trim(),address:document.getElementById('address').value.trim(),notes:document.getElementById('notes').value.trim(),status:'جديد',createdAt:serverTimestamp()};
- try{await addDoc(collection(db,'orders'),order);localStorage.setItem('zenoLastOrder',JSON.stringify(order));localStorage.removeItem('zenoBuy');document.getElementById('form').style.display='none';document.getElementById('success').classList.add('show')}catch(e){console.error(e);alert('حصل خطأ أثناء تسجيل الطلب: '+e.message)}finally{btn.disabled=false;btn.textContent='تأكيد الطلب'}
+ try{
+  await addDoc(collection(db,'orders'),order);
+
+  // إرسال الإشعار التلقائي لموبايلك فوراً عبر FCM API
+  fetch('https://fcm.googleapis.com/fcm/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=BKZ5dJsYr31iWOMYL7TkCboqDHL2m4qeBA3rA0FnVNK5Af0ncBSrfypzKmGIdll7TJmv-BRKta6wrpMoA9mhrQw'
+    },
+    body: JSON.stringify({
+      "to": "DcNmy-zkuICUQXWggUtHkj:APA91bGCm-qBT6ZYlm0GkfTb96dI-ePC-04t4iDN7pworwt1ainjNelj_C5Psw2Q8VoX5P1I5iBx_7Ws3cFfRg8uvYg0wRgFwiDgVThcs6OxUzogseVAeZQ",
+      "notification": {
+        "title": "📦 طلب جديد في ZENO Store!",
+        "body": `طلب جديد من ${order.customerName} بقيمة ${order.productPrice} ج.م`,
+        "icon": "https://cdn-icons-png.flaticon.com/512/3119/3119338.png",
+        "click_action": "https://abdelrhman14820109-dev.github.io/ZENO/"
+      }
+    })
+  }).catch(e=>console.error("فشل إرسال الإشعار:", e));
+
+  localStorage.setItem('zenoLastOrder',JSON.stringify(order));
+  localStorage.removeItem('zenoBuy');
+  document.getElementById('form').style.display='none';
+  document.getElementById('success').classList.add('show');
+ }catch(e){console.error(e);alert('حصل خطأ أثناء تسجيل الطلب: '+e.message)}finally{btn.disabled=false;btn.textContent='تأكيد الطلب'}
 };
 </script></body></html>
